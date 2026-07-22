@@ -1,33 +1,19 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
-import { db, users } from "@boilerplate/database";
+import { db, users, type User } from "@boilerplate/database";
+import { requireAuth, requireRole, type AuthedVariables } from "../middleware/auth";
 
-export const usersRoute = new Hono();
+function toPublicUser(user: User) {
+  const { passwordHash, ...publicUser } = user;
+  return publicUser;
+}
+
+export const usersRoute = new Hono<{ Variables: AuthedVariables }>();
+
+// Listing every account is an admin (management) capability, not something
+// the customer/vendor apps need for their own single-user dashboards.
+usersRoute.use("*", requireAuth, requireRole("management"));
 
 usersRoute.get("/", async (c) => {
   const allUsers = await db.select().from(users);
-  return c.json(allUsers);
-});
-
-usersRoute.get("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  const [user] = await db.select().from(users).where(eq(users.id, id));
-
-  if (!user) {
-    return c.json({ error: "User not found" }, 404);
-  }
-
-  return c.json(user);
-});
-
-usersRoute.post("/", async (c) => {
-  const body = await c.req.json<{ email: string; name: string }>();
-  const [created] = await db.insert(users).values(body).returning();
-  return c.json(created, 201);
-});
-
-usersRoute.delete("/:id", async (c) => {
-  const id = Number(c.req.param("id"));
-  await db.delete(users).where(eq(users.id, id));
-  return c.body(null, 204);
+  return c.json(allUsers.map(toPublicUser));
 });
