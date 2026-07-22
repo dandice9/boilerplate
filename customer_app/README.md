@@ -1,29 +1,29 @@
 # customer_app
 
-Flutter app for customers. State management via Riverpod, HTTP calls to `packages/api`.
+Flutter app for customers: register, login, dashboard, logout against the `api` server.
+State management via Riverpod; the auth token is persisted with `shared_preferences`.
 
 ## First-time setup
-
-This folder was scaffolded by hand (no Flutter SDK was available at generation time), so the
-native platform folders (`android/`, `ios/`, `web/`, etc.) don't exist yet. Once you have the
-Flutter SDK installed:
 
 ```bash
 flutter create . --project-name customer_app --org com.example
 flutter pub get
 ```
 
-This fills in the platform folders without touching the existing `lib/` code.
+This fills in the native platform folders (`android/`, `ios/`, `web/`, etc.) without touching
+the existing `lib/` code.
 
 ## Structure
 
 ```
 lib/
-  main.dart                     # entrypoint, wraps app in ProviderScope
-  app/app.dart                  # MaterialApp + theme + root route
-  shared/providers/api_client.dart  # http.Client provider + API base URL
-  shared/models/user.dart       # example model
-  features/home/                # example feature: fetches /users from the API
+  main.dart                          # entrypoint, wraps app in ProviderScope
+  app/app.dart                       # MaterialApp + auth-gated routing
+  shared/providers/api_client.dart   # http.Client provider + API base URL + ApiException
+  shared/providers/auth_provider.dart  # AuthController: login/register/logout, token persistence
+  shared/models/user.dart            # user model returned by the API
+  features/auth/                     # login_page.dart, register_page.dart
+  features/dashboard/                # dashboard_page.dart
 ```
 
 ## Run
@@ -33,4 +33,5 @@ flutter run
 ```
 
 Set `apiBaseUrl` in `lib/shared/providers/api_client.dart` to point at your running
-`packages/api` instance (defaults to `http://localhost:3000`).
+`api` instance (defaults to `http://localhost:3000`). Accounts registered here use
+role `customer`, which is a separate account namespace from the vendor/management apps.
